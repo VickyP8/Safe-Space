@@ -1,59 +1,91 @@
-// Configuración de Firebase
-const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_PROYECTO.firebaseapp.com",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_PROJECT_ID.appspot.com",
-    messagingSenderId: "TU_MESSAGING_SENDER_ID",
-    appId: "TU_APP_ID"
-};
+document.addEventListener("DOMContentLoaded", loadComments);
 
-// Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+function submitAnswer() {
+    let answerText = document.getElementById("answer").value;
+    if (answerText.trim() !== "") {
+        document.querySelector(".answer-section h2").innerHTML = "Answer: " + answerText;
+        document.getElementById("answer").value = "";
+    } else {
+        alert("Please write an answer.");
+    }
+}
 
-// Agregar comentario
-function addComment() {
+function addComment(parentId = null) {
     let commentText = document.getElementById("comment").value;
     let fileInput = document.getElementById("fileInput").files[0];
 
     if (commentText.trim() !== "" || fileInput) {
         let comment = {
+            id: Date.now(),
             text: commentText,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            file: fileInput ? URL.createObjectURL(fileInput) : null,
+            fileType: fileInput ? fileInput.type : null,
+            parentId: parentId
         };
 
-        db.collection("comments").add(comment).then(() => {
-            document.getElementById("comment").value = "";
-            document.getElementById("fileInput").value = "";
-        });
+        saveComment(comment);
+        document.getElementById("comment").value = "";
+        document.getElementById("fileInput").value = "";
     } else {
         alert("Please write a comment or upload a file.");
     }
 }
 
-// Mostrar comentarios en tiempo real
-db.collection("comments").orderBy("timestamp").onSnapshot(snapshot => {
+function saveComment(comment) {
+    let comments = JSON.parse(localStorage.getItem("comments")) || [];
+    comments.push(comment);
+    localStorage.setItem("comments", JSON.stringify(comments));
+    displayComments();
+}
+
+function loadComments() {
+    let comments = JSON.parse(localStorage.getItem("comments")) || [];
+    comments.forEach(displayComment);
+}
+
+function displayComments() {
     document.getElementById("comments-list").innerHTML = "";
     document.querySelector(".hearts-container").innerHTML = "";
 
-    snapshot.forEach(doc => {
-        let comment = doc.data();
-        displayComment(comment.text);
-    });
-});
-
-// Mostrar comentario en pantalla y en corazones flotantes
-function displayComment(text) {
-    const commentList = document.getElementById("comments-list");
-    const commentItem = document.createElement("div");
-    commentItem.innerHTML = `<p>${text}</p>`;
-
-    commentList.appendChild(commentItem);
-    createFloatingHeart(text);
+    let comments = JSON.parse(localStorage.getItem("comments")) || [];
+    comments.forEach(displayComment);
 }
 
-// Crear corazones flotantes con comentarios
+function displayComment(comment) {
+    const commentList = document.getElementById("comments-list");
+    const commentItem = document.createElement("div");
+    commentItem.innerHTML = `<p>${comment.text}</p>`;
+
+    if (comment.file) {
+        if (comment.fileType.startsWith("image")) {
+            const img = document.createElement("img");
+            img.src = comment.file;
+            img.style.width = "100px";
+            img.style.borderRadius = "10px";
+            commentItem.appendChild(img);
+        } else if (comment.fileType.startsWith("audio")) {
+            const audio = document.createElement("audio");
+            audio.src = comment.file;
+            audio.controls = true;
+            commentItem.appendChild(audio);
+        }
+    }
+
+    const replyButton = document.createElement("button");
+    replyButton.innerText = "Reply";
+    replyButton.classList.add("reply-button");
+    replyButton.onclick = () => {
+        let replyText = prompt("Write your reply:");
+        if (replyText) {
+            addComment(comment.id, replyText);
+        }
+    };
+    commentItem.appendChild(replyButton);
+
+    commentList.appendChild(commentItem);
+    createFloatingHeart(comment.text);
+}
+
 function createFloatingHeart(text) {
     const heartComment = document.createElement("div");
     heartComment.classList.add("heart-comment");
@@ -63,5 +95,4 @@ function createFloatingHeart(text) {
 
     heartComment.style.left = Math.random() > 0.5 ? "5vw" : "85vw";
     heartComment.style.top = Math.random() * 80 + "vh";
-    heartComment.style.animationDuration = Math.random() * 5 + 10 + "s";
 }
