@@ -1,0 +1,39 @@
+/* Estilos para comentarios flotantes */
+.heart-comment {
+    position: absolute;
+    background-color: white;
+    color: black;
+    font-size: 14px;
+    border-radius: 50%;
+    padding: 15px;
+    max-width: 200px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    opacity: 0.9;
+    animation: float 15s linear infinite;
+}
+
+/* Estilos para la lista de comentarios */
+#comments-list {
+    text-align: left;
+    margin-top: 20px;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: white;
+    border-radius: 10px;
+}
+
+/* Estilos para respuestas en hilos */
+.replies {
+    margin-left: 20px;
+    font-size: 12px;
+    color: gray;
+}
+
+.reply-comment {
+    background-color: #f0f0f0;
+    padding: 10px;
+    margin-left: 20px;
+    border-radius: 10px;
+}
