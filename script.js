@@ -25,7 +25,7 @@ function addComment(parentIndex = null) {
     }
 }
 
-// Guardar comentario en LocalStorage
+// Guardar comentarios en LocalStorage
 function saveComment(text, file, parentIndex) {
     let comments = JSON.parse(localStorage.getItem("comments")) || [];
     
@@ -69,11 +69,11 @@ function loadComments() {
     comments.forEach((comment, index) => createHeartComment(comment, index));
 }
 
-// Crear comentarios flotantes y en lista fija
+// Crear comentarios flotantes con forma de corazón
 function createHeartComment(comment, index, isReply = false, parentDiv = null) {
-    const commentDiv = document.createElement("div");
-    commentDiv.classList.add(isReply ? "reply-comment" : "heart-comment");
-    commentDiv.innerHTML = `<p>${comment.text}</p>`;
+    const heartComment = document.createElement("div");
+    heartComment.classList.add("heart-comment");
+    heartComment.innerHTML = `<p>${comment.text}</p>`;
 
     if (comment.file) {
         if (comment.type === "image") {
@@ -81,34 +81,33 @@ function createHeartComment(comment, index, isReply = false, parentDiv = null) {
             img.src = comment.file;
             img.style.width = "100px";
             img.style.borderRadius = "10px";
-            commentDiv.appendChild(img);
+            heartComment.appendChild(img);
         } else if (comment.type === "audio") {
             const audio = document.createElement("audio");
             audio.src = comment.file;
             audio.controls = true;
-            commentDiv.appendChild(audio);
+            heartComment.appendChild(audio);
         }
     }
+
+    // Posición aleatoria en los lados
+    heartComment.style.left = Math.random() > 0.5 ? "5vw" : "85vw";
+    heartComment.style.top = Math.random() * 80 + "vh";
 
     // Botón para responder
     const replyButton = document.createElement("button");
     replyButton.innerText = "Reply";
     replyButton.onclick = () => replyToComment(index);
-    commentDiv.appendChild(replyButton);
+    heartComment.appendChild(replyButton);
 
-    if (isReply && parentDiv) {
-        parentDiv.appendChild(commentDiv);
-    } else {
-        document.querySelector(".hearts-container").appendChild(commentDiv);
-        addCommentToList(comment, index, commentDiv);
-    }
+    document.querySelector(".hearts-container").appendChild(heartComment);
+    addCommentToList(comment, index);
 }
 
-// Agregar comentario a la lista fija
-function addCommentToList(comment, index, parentDiv = null) {
+// Agregar comentarios en lista fija
+function addCommentToList(comment, index) {
     const commentList = document.getElementById("comments-list");
     const commentItem = document.createElement("div");
-    commentItem.classList.add("comment-item");
 
     commentItem.innerHTML = `<p>${comment.text}</p>`;
 
@@ -144,7 +143,7 @@ function addCommentToList(comment, index, parentDiv = null) {
     commentList.appendChild(commentItem);
 }
 
-// Función para responder a un comentario específico
+// Función para responder a un comentario
 function replyToComment(index) {
     let replyText = prompt("Write your reply:");
     if (replyText) {
@@ -153,6 +152,12 @@ function replyToComment(index) {
 }
 
 // Renderizar comentarios actualizados
+function renderComments() {
+    document.getElementById("comments-list").innerHTML = "";
+    document.querySelector(".hearts-container").innerHTML = "";
+    loadComments();
+}
+
 function renderComments() {
     document.getElementById("comments-list").innerHTML = "";
     document.querySelector(".hearts-container").innerHTML = "";
