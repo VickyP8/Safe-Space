@@ -1,98 +1,91 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #cce7ff; /* Azul cielo pastel */
-    color: black;
-    text-align: center;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
+document.addEventListener("DOMContentLoaded", loadComments);
+
+function submitAnswer() {
+    let answerText = document.getElementById("answer").value;
+    if (answerText.trim() !== "") {
+        document.querySelector(".answer-section h2").innerHTML = "Answer: " + answerText;
+        document.getElementById("answer").value = "";
+    } else {
+        alert("Please write an answer.");
+    }
 }
 
-/* Contenedor principal */
-.container {
-    width: 50%;
-    margin: auto;
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    position: relative;
-    z-index: 10;
+function addComment(parentId = null) {
+    let commentText = document.getElementById("comment").value;
+    let fileInput = document.getElementById("fileInput").files[0];
+
+    if (commentText.trim() !== "" || fileInput) {
+        let comment = {
+            id: Date.now(),
+            text: commentText,
+            file: fileInput ? URL.createObjectURL(fileInput) : null,
+            fileType: fileInput ? fileInput.type : null,
+            parentId: parentId
+        };
+
+        saveComment(comment);
+        document.getElementById("comment").value = "";
+        document.getElementById("fileInput").value = "";
+    } else {
+        alert("Please write a comment or upload a file.");
+    }
 }
 
-/* Pregunta */
-.question {
-    font-size: 20px;
-    color: #003366;
-    font-weight: bold;
-    margin-bottom: 20px;
+/* Guardar comentarios en LocalStorage */
+function saveComment(comment) {
+    let comments = JSON.parse(localStorage.getItem("comments")) || [];
+    comments.push(comment);
+    localStorage.setItem("comments", JSON.stringify(comments));
+    displayComments();
 }
 
-/* Respuesta y comentarios */
-.answer-section textarea, .comments-section textarea {
-    width: 100%;
-    height: 50px;
-    margin: 10px 0;
-    padding: 5px;
-    border-radius: 5px;
-    border: 1px solid #003366;
+/* Cargar comentarios almacenados */
+function loadComments() {
+    let comments = JSON.parse(localStorage.getItem("comments")) || [];
+    comments.forEach(displayComment);
 }
 
-button {
-    background-color: #003366;
-    color: white;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 5px;
-    margin-top: 5px;
+/* Mostrar comentarios en la lista y en corazones flotantes */
+function displayComments() {
+    document.getElementById("comments-list").innerHTML = "";
+    document.querySelector(".hearts-container").innerHTML = "";
+
+    let comments = JSON.parse(localStorage.getItem("comments")) || [];
+    comments.forEach(displayComment);
 }
 
-button:hover {
-    background-color: #002244;
-}
+function displayComment(comment) {
+    const commentList = document.getElementById("comments-list");
+    const commentItem = document.createElement("div");
+    commentItem.classList.add(comment.parentId ? "reply" : "comment");
+    commentItem.innerHTML = `<p>${comment.text}</p>`;
 
-/* Lista de comentarios */
-#comments-list {
-    text-align: left;
-    margin-top: 20px;
-    padding: 10px;
-    max-height: 300px;
-    overflow-y: auto;
-    background-color: white;
-    border-radius: 10px;
-}
+    if (comment.file) {
+        if (comment.fileType.startsWith("image")) {
+            const img = document.createElement("img");
+            img.src = comment.file;
+            img.style.width = "100px";
+            img.style.borderRadius = "10px";
+            commentItem.appendChild(img);
+        } else if (comment.fileType.startsWith("audio")) {
+            const audio = document.createElement("audio");
+            audio.src = comment.file;
+            audio.controls = true;
+            commentItem.appendChild(audio);
+        }
+    }
 
-/* Respuesta a comentarios */
-.reply {
-    margin-left: 20px;
-    font-size: 14px;
-    color: gray;
-}
+    // Botón de responder
+    const replyButton = document.createElement("button");
+    replyButton.innerText = "Reply";
+    replyButton.classList.add("reply-button");
+    replyButton.onclick = () => {
+        let replyText = prompt("Write your reply:");
+        if (replyText) {
+            addComment(comment.id, replyText);
+        }
+    };
+    commentItem.appendChild(replyButton);
 
-/* Botón de responder */
-.reply-button {
-    font-size: 12px;
-    background-color: #66a3ff;
-    padding: 5px;
-    margin-left: 10px;
-}
-
-.reply-button:hover {
-    background-color: #4477dd;
-}
-
-/* Corazones flotantes */
-.heart-comment {
-    position: absolute;
-    background-color: white;
-    color: black;
-    font-size: 14px;
-    border-radius: 50%;
-    padding: 15px;
-    max-width: 200px;
-    text-align: center;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    opacity: 0.9;
-    animation: float 15s linear infinite;
+    commentList.appendChild(commentItem);
 }
