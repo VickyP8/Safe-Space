@@ -1,165 +1,98 @@
-document.addEventListener("DOMContentLoaded", () => {
-    loadComments(); // Cargar comentarios guardados al abrir la página
-});
-
-function submitAnswer() {
-    let answerText = document.getElementById("answer").value;
-    if (answerText.trim() !== "") {
-        document.querySelector(".answer-section h2").innerHTML = "Answer: " + answerText;
-        document.getElementById("answer").value = "";
-    } else {
-        alert("Please write an answer.");
-    }
+body {
+    font-family: Arial, sans-serif;
+    background-color: #cce7ff; /* Azul cielo pastel */
+    color: black;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
 }
 
-function addComment(parentIndex = null) {
-    let commentText = document.getElementById("comment").value;
-    let fileInput = document.getElementById("fileInput").files[0];
-
-    if (commentText.trim() !== "" || fileInput) {
-        saveComment(commentText, fileInput, parentIndex);
-        document.getElementById("comment").value = "";
-        document.getElementById("fileInput").value = "";
-    } else {
-        alert("Please write a comment or upload a file.");
-    }
+/* Contenedor principal */
+.container {
+    width: 50%;
+    margin: auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 10;
 }
 
-// Guardar comentarios en LocalStorage
-function saveComment(text, file, parentIndex) {
-    let comments = JSON.parse(localStorage.getItem("comments")) || [];
-    
-    let newComment = { text: text, file: null, type: null, replies: [] };
-
-    if (file) {
-        const fileType = file.type.split("/")[0];
-        const reader = new FileReader();
-        reader.onload = function (event) {
-            newComment.file = event.target.result;
-            newComment.type = fileType;
-
-            if (parentIndex !== null) {
-                comments[parentIndex].replies.push(newComment);
-            } else {
-                comments.push(newComment);
-            }
-
-            localStorage.setItem("comments", JSON.stringify(comments));
-            renderComments();
-        };
-        reader.readAsDataURL(file);
-    } else {
-        if (parentIndex !== null) {
-            comments[parentIndex].replies.push(newComment);
-        } else {
-            comments.push(newComment);
-        }
-
-        localStorage.setItem("comments", JSON.stringify(comments));
-        renderComments();
-    }
+/* Pregunta */
+.question {
+    font-size: 20px;
+    color: #003366;
+    font-weight: bold;
+    margin-bottom: 20px;
 }
 
-// Cargar comentarios desde LocalStorage
-function loadComments() {
-    let comments = JSON.parse(localStorage.getItem("comments")) || [];
-    document.getElementById("comments-list").innerHTML = "";
-    document.querySelector(".hearts-container").innerHTML = "";
-
-    comments.forEach((comment, index) => createHeartComment(comment, index));
+/* Respuesta y comentarios */
+.answer-section textarea, .comments-section textarea {
+    width: 100%;
+    height: 50px;
+    margin: 10px 0;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #003366;
 }
 
-// Crear comentarios flotantes con forma de corazón
-function createHeartComment(comment, index, isReply = false, parentDiv = null) {
-    const heartComment = document.createElement("div");
-    heartComment.classList.add("heart-comment");
-    heartComment.innerHTML = `<p>${comment.text}</p>`;
-
-    if (comment.file) {
-        if (comment.type === "image") {
-            const img = document.createElement("img");
-            img.src = comment.file;
-            img.style.width = "100px";
-            img.style.borderRadius = "10px";
-            heartComment.appendChild(img);
-        } else if (comment.type === "audio") {
-            const audio = document.createElement("audio");
-            audio.src = comment.file;
-            audio.controls = true;
-            heartComment.appendChild(audio);
-        }
-    }
-
-    // Posición aleatoria en los lados
-    heartComment.style.left = Math.random() > 0.5 ? "5vw" : "85vw";
-    heartComment.style.top = Math.random() * 80 + "vh";
-
-    // Botón para responder
-    const replyButton = document.createElement("button");
-    replyButton.innerText = "Reply";
-    replyButton.onclick = () => replyToComment(index);
-    heartComment.appendChild(replyButton);
-
-    document.querySelector(".hearts-container").appendChild(heartComment);
-    addCommentToList(comment, index);
+button {
+    background-color: #003366;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 5px;
 }
 
-// Agregar comentarios en lista fija
-function addCommentToList(comment, index) {
-    const commentList = document.getElementById("comments-list");
-    const commentItem = document.createElement("div");
-
-    commentItem.innerHTML = `<p>${comment.text}</p>`;
-
-    if (comment.file) {
-        if (comment.type === "image") {
-            const img = document.createElement("img");
-            img.src = comment.file;
-            img.style.width = "100px";
-            img.style.borderRadius = "10px";
-            commentItem.appendChild(img);
-        } else if (comment.type === "audio") {
-            const audio = document.createElement("audio");
-            audio.src = comment.file;
-            audio.controls = true;
-            commentItem.appendChild(audio);
-        }
-    }
-
-    // Botón para responder
-    const replyButton = document.createElement("button");
-    replyButton.innerText = "Reply";
-    replyButton.onclick = () => replyToComment(index);
-    commentItem.appendChild(replyButton);
-
-    // Sección de respuestas
-    const repliesDiv = document.createElement("div");
-    repliesDiv.classList.add("replies");
-    comment.replies.forEach((reply, replyIndex) => {
-        createHeartComment(reply, replyIndex, true, repliesDiv);
-    });
-
-    commentItem.appendChild(repliesDiv);
-    commentList.appendChild(commentItem);
+button:hover {
+    background-color: #002244;
 }
 
-// Función para responder a un comentario
-function replyToComment(index) {
-    let replyText = prompt("Write your reply:");
-    if (replyText) {
-        saveComment(replyText, null, index);
-    }
+/* Lista de comentarios */
+#comments-list {
+    text-align: left;
+    margin-top: 20px;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: white;
+    border-radius: 10px;
 }
 
-// Renderizar comentarios actualizados
-function renderComments() {
-    document.getElementById("comments-list").innerHTML = "";
-    document.querySelector(".hearts-container").innerHTML = "";
-    loadComments();
+/* Respuesta a comentarios */
+.reply {
+    margin-left: 20px;
+    font-size: 14px;
+    color: gray;
 }
 
-function renderComments() {
-    document.getElementById("comments-list").innerHTML = "";
-    document.querySelector(".hearts-container").innerHTML = "";
-    loadComments();
+/* Botón de responder */
+.reply-button {
+    font-size: 12px;
+    background-color: #66a3ff;
+    padding: 5px;
+    margin-left: 10px;
+}
+
+.reply-button:hover {
+    background-color: #4477dd;
+}
+
+/* Corazones flotantes */
+.heart-comment {
+    position: absolute;
+    background-color: white;
+    color: black;
+    font-size: 14px;
+    border-radius: 50%;
+    padding: 15px;
+    max-width: 200px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    opacity: 0.9;
+    animation: float 15s linear infinite;
 }
