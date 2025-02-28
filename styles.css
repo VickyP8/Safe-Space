@@ -20,7 +20,7 @@ body {
     z-index: 10;
 }
 
-/* Corazones flotantes */
+/* Contenedor de corazones flotantes */
 .hearts-container {
     position: fixed;
     top: 0;
