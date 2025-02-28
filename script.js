@@ -1,87 +1,73 @@
-const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_AUTH_DOMAIN",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_STORAGE_BUCKET",
-    messagingSenderId: "TU_MESSAGING_SENDER_ID",
-    appId: "TU_APP_ID"
-};
+const JSON_BIN_URL = "https://api.jsonbin.io/v3/b/67c17e13ad19ca34f813f65d"; // Tu URL del Bin
+const JSON_BIN_SECRET = "$2a$10$R0KsiREnS15tX9hjDpC4huvKctoqbTXZ395nL7Z2VzuIZeTnm1jNK"; // Tu X-Master-Key
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// Cargar comentarios al inicio
+document.addEventListener("DOMContentLoaded", loadComments);
 
-function submitAnswer() {
-    let answerText = document.getElementById("answer").value;
-    if (answerText.trim() !== "") {
-        document.querySelector(".answer-section h2").innerHTML = "Answer: " + answerText;
-        document.getElementById("answer").value = "";
-    } else {
-        alert("Please write an answer.");
+async function loadComments() {
+    try {
+        const response = await fetch(JSON_BIN_URL, {
+            method: "GET",
+            headers: {
+                "X-Master-Key": JSON_BIN_SECRET
+            }
+        });
+        const data = await response.json();
+        const comments = data.record.comments || [];
+        document.getElementById("comments-list").innerHTML = "";
+        comments.forEach(displayComment);
+    } catch (error) {
+        console.error("Error loading comments:", error);
     }
 }
 
-function addComment(parentId = null) {
+async function addComment() {
     let commentText = document.getElementById("comment").value;
-    let fileInput = document.getElementById("fileInput").files[0];
+    if (!commentText.trim()) {
+        alert("Please write a comment.");
+        return;
+    }
 
-    if (commentText.trim() !== "" || fileInput) {
-        let comment = {
-            text: commentText,
-            fileUrl: fileInput ? URL.createObjectURL(fileInput) : null,
-            fileType: fileInput ? fileInput.type : null,
-            parentId: parentId,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    try {
+        // Obtener comentarios existentes
+        const response = await fetch(JSON_BIN_URL, {
+            method: "GET",
+            headers: {
+                "X-Master-Key": JSON_BIN_SECRET
+            }
+        });
+        const data = await response.json();
+        const comments = data.record.comments || [];
+
+        // Agregar nuevo comentario
+        const newComment = {
+            id: Date.now(),
+            text: commentText
         };
 
-        db.collection("comments").add(comment).then(() => {
-            document.getElementById("comment").value = "";
-            document.getElementById("fileInput").value = "";
+        comments.push(newComment);
+
+        // Guardar comentarios en JSONBin.io
+        await fetch(JSON_BIN_URL, {
+            method: "PUT",
+            headers: {
+                "X-Master-Key": JSON_BIN_SECRET,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ comments })
         });
-    } else {
-        alert("Please write a comment or upload a file.");
+
+        // Mostrar comentario en la página
+        displayComment(newComment);
+        document.getElementById("comment").value = "";
+    } catch (error) {
+        console.error("Error adding comment:", error);
     }
 }
 
-function loadComments() {
-    db.collection("comments").orderBy("timestamp").onSnapshot((snapshot) => {
-        document.getElementById("comments-list").innerHTML = "";
-        document.querySelector(".hearts-container").innerHTML = "";
-
-        snapshot.forEach((doc) => {
-            displayComment(doc.data(), doc.id);
-        });
-    });
-}
-
-function displayComment(comment, id) {
+function displayComment(comment) {
     const commentList = document.getElementById("comments-list");
     const commentItem = document.createElement("div");
     commentItem.innerHTML = `<p>${comment.text}</p>`;
-
-    const replyButton = document.createElement("button");
-    replyButton.innerText = "Reply";
-    replyButton.classList.add("reply-button");
-    replyButton.onclick = () => {
-        let replyText = prompt("Write your reply:");
-        if (replyText) {
-            addComment(id, replyText);
-        }
-    };
-    commentItem.appendChild(replyButton);
-
     commentList.appendChild(commentItem);
-    createFloatingHeart(comment.text);
 }
-
-function createFloatingHeart(text) {
-    const heartComment = document.createElement("div");
-    heartComment.classList.add("heart-comment");
-    heartComment.innerText = text;
-
-    document.querySelector(".hearts-container").appendChild(heartComment);
-
-    heartComment.style.left = Math.random() > 0.5 ? "5vw" : "85vw";
-    heartComment.style.top = Math.random() * 80 + "vh";
-}
-
-document.addEventListener("DOMContentLoaded", loadComments);
