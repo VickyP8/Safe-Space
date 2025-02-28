@@ -77,18 +77,23 @@ async function deleteComment(commentId) {
         const response = await fetch(JSON_BIN_URL, {
             method: "GET",
             headers: {
-                "X-Master-Key": JSON_BIN_SECRET"
+                "X-Master-Key": JSON_BIN_SECRET
             }
         });
         const data = await response.json();
         let comments = data.record.comments || [];
 
-        comments = comments.filter(comment => comment.id !== commentId);
-        comments.forEach(comment => {
-            if (comment.replies) {
-                comment.replies = comment.replies.filter(reply => reply.id !== commentId);
-            }
-        });
+        // Eliminar comentario y sus respuestas
+        function removeComment(commentsArray) {
+            return commentsArray
+                .filter(comment => comment.id !== commentId)
+                .map(comment => ({
+                    ...comment,
+                    replies: removeComment(comment.replies || [])
+                }));
+        }
+
+        comments = removeComment(comments);
 
         await fetch(JSON_BIN_URL, {
             method: "PUT",
@@ -113,6 +118,7 @@ function displayComment(comment, parentElement) {
     commentItem.classList.add("comment");
     commentItem.innerHTML = `<p>${comment.text}</p>`;
 
+    // Botón de responder
     const replyButton = document.createElement("button");
     replyButton.innerText = "Reply";
     replyButton.classList.add("reply-button");
@@ -124,6 +130,7 @@ function displayComment(comment, parentElement) {
     };
     commentItem.appendChild(replyButton);
 
+    // Botón de eliminar
     const deleteButton = document.createElement("button");
     deleteButton.innerText = "Delete";
     deleteButton.classList.add("delete-button");
@@ -132,6 +139,7 @@ function displayComment(comment, parentElement) {
 
     commentList.appendChild(commentItem);
 
+    // Mostrar respuestas si hay
     if (comment.replies && comment.replies.length > 0) {
         const replyContainer = document.createElement("div");
         replyContainer.classList.add("reply-container");
