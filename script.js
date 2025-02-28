@@ -1,4 +1,14 @@
-document.addEventListener("DOMContentLoaded", loadComments);
+const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_AUTH_DOMAIN",
+    projectId: "TU_PROJECT_ID",
+    storageBucket: "TU_STORAGE_BUCKET",
+    messagingSenderId: "TU_MESSAGING_SENDER_ID",
+    appId: "TU_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 function submitAnswer() {
     let answerText = document.getElementById("answer").value;
@@ -16,60 +26,37 @@ function addComment(parentId = null) {
 
     if (commentText.trim() !== "" || fileInput) {
         let comment = {
-            id: Date.now(),
             text: commentText,
-            file: fileInput ? URL.createObjectURL(fileInput) : null,
+            fileUrl: fileInput ? URL.createObjectURL(fileInput) : null,
             fileType: fileInput ? fileInput.type : null,
-            parentId: parentId
+            parentId: parentId,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        saveComment(comment);
-        document.getElementById("comment").value = "";
-        document.getElementById("fileInput").value = "";
+        db.collection("comments").add(comment).then(() => {
+            document.getElementById("comment").value = "";
+            document.getElementById("fileInput").value = "";
+        });
     } else {
         alert("Please write a comment or upload a file.");
     }
 }
 
-function saveComment(comment) {
-    let comments = JSON.parse(localStorage.getItem("comments")) || [];
-    comments.push(comment);
-    localStorage.setItem("comments", JSON.stringify(comments));
-    displayComments();
-}
-
 function loadComments() {
-    let comments = JSON.parse(localStorage.getItem("comments")) || [];
-    comments.forEach(displayComment);
+    db.collection("comments").orderBy("timestamp").onSnapshot((snapshot) => {
+        document.getElementById("comments-list").innerHTML = "";
+        document.querySelector(".hearts-container").innerHTML = "";
+
+        snapshot.forEach((doc) => {
+            displayComment(doc.data(), doc.id);
+        });
+    });
 }
 
-function displayComments() {
-    document.getElementById("comments-list").innerHTML = "";
-    document.querySelector(".hearts-container").innerHTML = "";
-
-    let comments = JSON.parse(localStorage.getItem("comments")) || [];
-    comments.forEach(displayComment);
-}
-
-function displayComment(comment) {
+function displayComment(comment, id) {
     const commentList = document.getElementById("comments-list");
     const commentItem = document.createElement("div");
     commentItem.innerHTML = `<p>${comment.text}</p>`;
-
-    if (comment.file) {
-        if (comment.fileType.startsWith("image")) {
-            const img = document.createElement("img");
-            img.src = comment.file;
-            img.style.width = "100px";
-            img.style.borderRadius = "10px";
-            commentItem.appendChild(img);
-        } else if (comment.fileType.startsWith("audio")) {
-            const audio = document.createElement("audio");
-            audio.src = comment.file;
-            audio.controls = true;
-            commentItem.appendChild(audio);
-        }
-    }
 
     const replyButton = document.createElement("button");
     replyButton.innerText = "Reply";
@@ -77,7 +64,7 @@ function displayComment(comment) {
     replyButton.onclick = () => {
         let replyText = prompt("Write your reply:");
         if (replyText) {
-            addComment(comment.id, replyText);
+            addComment(id, replyText);
         }
     };
     commentItem.appendChild(replyButton);
@@ -96,3 +83,5 @@ function createFloatingHeart(text) {
     heartComment.style.left = Math.random() > 0.5 ? "5vw" : "85vw";
     heartComment.style.top = Math.random() * 80 + "vh";
 }
+
+document.addEventListener("DOMContentLoaded", loadComments);
