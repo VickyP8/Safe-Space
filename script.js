@@ -15,13 +15,13 @@ async function loadComments() {
         const data = await response.json();
         const comments = data.record.comments || [];
         document.getElementById("comments-list").innerHTML = "";
-        comments.forEach(displayComment);
+        comments.forEach(comment => displayComment(comment, null));
     } catch (error) {
         console.error("Error loading comments:", error);
     }
 }
 
-async function addComment() {
+async function addComment(parentId = null) {
     let commentText = document.getElementById("comment").value;
     if (!commentText.trim()) {
         alert("Please write a comment.");
@@ -29,7 +29,6 @@ async function addComment() {
     }
 
     try {
-        // Obtener comentarios existentes
         const response = await fetch(JSON_BIN_URL, {
             method: "GET",
             headers: {
@@ -39,15 +38,22 @@ async function addComment() {
         const data = await response.json();
         const comments = data.record.comments || [];
 
-        // Agregar nuevo comentario
         const newComment = {
             id: Date.now(),
-            text: commentText
+            text: commentText,
+            parentId: parentId,
+            replies: []
         };
 
-        comments.push(newComment);
+        if (parentId) {
+            const parentComment = comments.find(c => c.id === parentId);
+            if (parentComment) {
+                parentComment.replies.push(newComment);
+            }
+        } else {
+            comments.push(newComment);
+        }
 
-        // Guardar comentarios en JSONBin.io
         await fetch(JSON_BIN_URL, {
             method: "PUT",
             headers: {
@@ -57,17 +63,79 @@ async function addComment() {
             body: JSON.stringify({ comments })
         });
 
-        // Mostrar comentario en la página
-        displayComment(newComment);
         document.getElementById("comment").value = "";
+        document.getElementById("comments-list").innerHTML = "";
+        comments.forEach(comment => displayComment(comment, null));
+
     } catch (error) {
         console.error("Error adding comment:", error);
     }
 }
 
-function displayComment(comment) {
-    const commentList = document.getElementById("comments-list");
+async function deleteComment(commentId) {
+    try {
+        const response = await fetch(JSON_BIN_URL, {
+            method: "GET",
+            headers: {
+                "X-Master-Key": JSON_BIN_SECRET"
+            }
+        });
+        const data = await response.json();
+        let comments = data.record.comments || [];
+
+        comments = comments.filter(comment => comment.id !== commentId);
+        comments.forEach(comment => {
+            if (comment.replies) {
+                comment.replies = comment.replies.filter(reply => reply.id !== commentId);
+            }
+        });
+
+        await fetch(JSON_BIN_URL, {
+            method: "PUT",
+            headers: {
+                "X-Master-Key": JSON_BIN_SECRET,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ comments })
+        });
+
+        document.getElementById("comments-list").innerHTML = "";
+        comments.forEach(comment => displayComment(comment, null));
+
+    } catch (error) {
+        console.error("Error deleting comment:", error);
+    }
+}
+
+function displayComment(comment, parentElement) {
+    const commentList = parentElement || document.getElementById("comments-list");
     const commentItem = document.createElement("div");
+    commentItem.classList.add("comment");
     commentItem.innerHTML = `<p>${comment.text}</p>`;
+
+    const replyButton = document.createElement("button");
+    replyButton.innerText = "Reply";
+    replyButton.classList.add("reply-button");
+    replyButton.onclick = () => {
+        let replyText = prompt("Write your reply:");
+        if (replyText) {
+            addComment(comment.id, replyText);
+        }
+    };
+    commentItem.appendChild(replyButton);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.innerText = "Delete";
+    deleteButton.classList.add("delete-button");
+    deleteButton.onclick = () => deleteComment(comment.id);
+    commentItem.appendChild(deleteButton);
+
     commentList.appendChild(commentItem);
+
+    if (comment.replies && comment.replies.length > 0) {
+        const replyContainer = document.createElement("div");
+        replyContainer.classList.add("reply-container");
+        comment.replies.forEach(reply => displayComment(reply, replyContainer));
+        commentItem.appendChild(replyContainer);
+    }
 }
