@@ -14,7 +14,11 @@ async function loadComments() {
         const data = await response.json();
         const comments = data.record.comments || [];
         document.getElementById("comments-list").innerHTML = "";
-        comments.forEach(comment => displayComment(comment, null));
+        document.querySelector(".hearts-container").innerHTML = "";
+        comments.forEach(comment => {
+            displayComment(comment, null);
+            createFloatingHeart(comment.text);
+        });
     } catch (error) {
         console.error("Error loading comments:", error);
     }
@@ -64,50 +68,26 @@ async function addComment(parentId = null) {
 
         document.getElementById("comment").value = "";
         document.getElementById("comments-list").innerHTML = "";
-        comments.forEach(comment => displayComment(comment, null));
+        comments.forEach(comment => {
+            displayComment(comment, null);
+            createFloatingHeart(comment.text);
+        });
 
     } catch (error) {
         console.error("Error adding comment:", error);
     }
 }
 
-async function deleteComment(commentId) {
-    try {
-        const response = await fetch(JSON_BIN_URL, {
-            method: "GET",
-            headers: {
-                "X-Master-Key": JSON_BIN_SECRET
-            }
-        });
-        const data = await response.json();
-        let comments = data.record.comments || [];
+function createFloatingHeart(text) {
+    const heart = document.createElement("div");
+    heart.classList.add("heart-comment");
+    heart.innerText = text;
 
-        function removeComment(commentsArray) {
-            return commentsArray
-                .filter(comment => comment.id !== commentId)
-                .map(comment => ({
-                    ...comment,
-                    replies: removeComment(comment.replies || [])
-                }));
-        }
+    document.querySelector(".hearts-container").appendChild(heart);
 
-        comments = removeComment(comments);
-
-        await fetch(JSON_BIN_URL, {
-            method: "PUT",
-            headers: {
-                "X-Master-Key": JSON_BIN_SECRET,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ comments })
-        });
-
-        document.getElementById("comments-list").innerHTML = "";
-        comments.forEach(comment => displayComment(comment, null));
-
-    } catch (error) {
-        console.error("Error deleting comment:", error);
-    }
+    heart.style.left = Math.random() > 0.5 ? "5vw" : "85vw";
+    heart.style.top = Math.random() * 80 + "vh";
+    heart.style.animationDuration = Math.random() * 5 + 10 + "s";
 }
 
 function displayComment(comment, parentElement) {
