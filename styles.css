@@ -1,7 +1,6 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #cce7ff; /* Azul cielo pastel */
-    color: black;
+    background-color: #cce7ff;
     text-align: center;
     margin: 0;
     padding: 0;
@@ -16,19 +15,9 @@ body {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    position: relative;
-    z-index: 10;
 }
 
-/* Pregunta */
-.question {
-    font-size: 20px;
-    color: #003366;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-
-/* Comentarios */
+/* Lista de comentarios */
 #comments-list {
     text-align: left;
     margin-top: 20px;
@@ -39,18 +28,6 @@ body {
     border-radius: 10px;
 }
 
-/* Botón de responder */
-.reply-button {
-    font-size: 12px;
-    background-color: #66a3ff;
-    padding: 5px;
-    margin-left: 10px;
-}
-
-.reply-button:hover {
-    background-color: #4477dd;
-}
-
 /* Corazones flotantes */
 .hearts-container {
     position: fixed;
@@ -59,26 +36,17 @@ body {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 1;
 }
 
-/* Comentarios flotantes en corazones */
+/* Comentarios flotantes */
 .heart-comment {
     position: absolute;
     background-color: white;
-    color: black;
-    font-size: 14px;
+    padding: 10px;
     border-radius: 50%;
-    padding: 15px;
     max-width: 200px;
     text-align: center;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     opacity: 0.9;
     animation: float 15s linear infinite;
-}
-
-/* Animación de los corazones flotantes */
-@keyframes float {
-    0% { transform: translateY(100vh) scale(1); opacity: 1; }
-    100% { transform: translateY(-10vh) scale(1.2); opacity: 0.5; }
 }
