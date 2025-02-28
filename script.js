@@ -31,7 +31,6 @@ function addComment(parentId = null) {
     }
 }
 
-/* Guardar comentarios en LocalStorage */
 function saveComment(comment) {
     let comments = JSON.parse(localStorage.getItem("comments")) || [];
     comments.push(comment);
@@ -39,13 +38,11 @@ function saveComment(comment) {
     displayComments();
 }
 
-/* Cargar comentarios almacenados */
 function loadComments() {
     let comments = JSON.parse(localStorage.getItem("comments")) || [];
     comments.forEach(displayComment);
 }
 
-/* Mostrar comentarios en la lista y en corazones flotantes */
 function displayComments() {
     document.getElementById("comments-list").innerHTML = "";
     document.querySelector(".hearts-container").innerHTML = "";
@@ -75,7 +72,6 @@ function displayComment(comment) {
         }
     }
 
-    // Botón de responder
     const replyButton = document.createElement("button");
     replyButton.innerText = "Reply";
     replyButton.classList.add("reply-button");
@@ -88,4 +84,18 @@ function displayComment(comment) {
     commentItem.appendChild(replyButton);
 
     commentList.appendChild(commentItem);
+    createFloatingHeart(comment.text);
+}
+
+/* Crear corazones flotantes con comentarios */
+function createFloatingHeart(text) {
+    const heartComment = document.createElement("div");
+    heartComment.classList.add("heart-comment");
+    heartComment.innerText = text;
+
+    document.querySelector(".hearts-container").appendChild(heartComment);
+
+    heartComment.style.left = Math.random() > 0.5 ? "5vw" : "85vw";
+    heartComment.style.top = Math.random() * 80 + "vh";
+    heartComment.style.animationDuration = Math.random() * 5 + 10 + "s";
 }
