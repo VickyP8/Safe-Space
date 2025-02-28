@@ -1,7 +1,6 @@
 const JSON_BIN_URL = "https://api.jsonbin.io/v3/b/67c17e13ad19ca34f813f65d"; // Tu URL del Bin
 const JSON_BIN_SECRET = "$2a$10$R0KsiREnS15tX9hjDpC4huvKctoqbTXZ395nL7Z2VzuIZeTnm1jNK"; // Tu X-Master-Key
 
-// Cargar comentarios al inicio
 document.addEventListener("DOMContentLoaded", loadComments);
 
 async function loadComments() {
@@ -83,7 +82,6 @@ async function deleteComment(commentId) {
         const data = await response.json();
         let comments = data.record.comments || [];
 
-        // Eliminar comentario y sus respuestas
         function removeComment(commentsArray) {
             return commentsArray
                 .filter(comment => comment.id !== commentId)
@@ -118,7 +116,6 @@ function displayComment(comment, parentElement) {
     commentItem.classList.add("comment");
     commentItem.innerHTML = `<p>${comment.text}</p>`;
 
-    // Botón de responder
     const replyButton = document.createElement("button");
     replyButton.innerText = "Reply";
     replyButton.classList.add("reply-button");
@@ -130,7 +127,6 @@ function displayComment(comment, parentElement) {
     };
     commentItem.appendChild(replyButton);
 
-    // Botón de eliminar
     const deleteButton = document.createElement("button");
     deleteButton.innerText = "Delete";
     deleteButton.classList.add("delete-button");
@@ -138,12 +134,4 @@ function displayComment(comment, parentElement) {
     commentItem.appendChild(deleteButton);
 
     commentList.appendChild(commentItem);
-
-    // Mostrar respuestas si hay
-    if (comment.replies && comment.replies.length > 0) {
-        const replyContainer = document.createElement("div");
-        replyContainer.classList.add("reply-container");
-        comment.replies.forEach(reply => displayComment(reply, replyContainer));
-        commentItem.appendChild(replyContainer);
-    }
 }
